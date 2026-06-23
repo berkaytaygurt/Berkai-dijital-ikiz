@@ -1,0 +1,24 @@
+# ─── GİZLİ / HASSAS DOSYALAR (ASLA GITHUB'A ATMA) ────────────
+.env
+*.env
+
+# ─── KİŞİSEL VERİ İÇEREN DOSYALAR ─────────────────────────────
+# Bu klasörde/dosyalarda gerçek insanların WhatsApp/Instagram
+# mesajları var. GitHub'a public repo olarak atarsan herkes
+# bu konuşmaları okuyabilir.
+berkay_tam_hafiza_db/
+berkay_profil.json
+berkai_oturum_hafizasi.db
+*.db
+
+# ─── PYTHON ────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+
+# ─── EDİTÖR / SİSTEM ───────────────────────────────────────────
+.DS_Store
+.vscode/
+.idea/
