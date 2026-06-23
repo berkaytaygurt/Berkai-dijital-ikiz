@@ -131,28 +131,14 @@ def oturum_getir(kisi, limit=8):
     rows.reverse()
     return rows
 
-# ─── ARAMA FONKSİYONLARI ─────────────────────────────────────
-KARA_LISTE = {
-    "whatsapp","sistem","grup","yönetici","admin",
-    "sen","ben","siz","biz","mesaj","arama",
-    "berkaytaygurt","berkay","berkai"
-}
+# ─── ARAMA FONKSİYONLARI (RAM DOSTU YENİ YAPI) ───────────────
 
-def taninan_kisileri_cek():
-    try:
-        hepsi = vector_store.get()
-        isimler = set()
-        for meta in (hepsi.get("metadatas") or []):
-            if meta and "source" in meta:
-                isim = meta["source"].replace("\u200e","").strip()
-                if isim and len(isim) > 2 and isim.lower() not in KARA_LISTE:
-                    isimler.add(isim)
-        return sorted(isimler)
-    except:
-        return []
-
-TANINAN_KISILER = taninan_kisileri_cek()
-print(f"👥 {len(TANINAN_KISILER)} kişi bulundu")
+# 🚨 Tüm veritabanını taratan o katil get() fonksiyonları tamamen silindi.
+# Sadece muhabbette adı sık geçecek ve DB'de anısı olan ana kadroyu buraya yaz.
+TANINAN_KISILER = [
+    "hakan", "hatice", "ferdem", "zülal", "tugay", "sinem", "emre", "fatih", "cesur",  "yiğit","lwod",
+    "ufuk", "ali", "efe", "aybars abi", "kağan"
+]
 
 def akilli_sorgu(gelen_mesaj, oturum_gecmisi):
     if len(gelen_mesaj.split()) <= 3 and oturum_gecmisi:
@@ -171,31 +157,12 @@ def mesajdaki_isimleri_bul(mesaj):
                 bulunanlar.add(kisi)
     return bulunanlar
 
-def keyword_ara(isim, konusulan_kisi, max_sonuc=5):
-    sonuclar = []
-    kisi_temiz = konusulan_kisi.lower().strip()
-    yetkili = kisi_temiz in ["berkay", "berkay taygurt"]
-    try:
-        hepsi = vector_store.get(include=["documents","metadatas"])
-        for doc, meta in zip(hepsi.get("documents",[]), hepsi.get("metadatas",[])):
-            if meta and "source" in meta:
-                kaynak = meta["source"].lower().strip()
-                if not yetkili and kaynak != kisi_temiz:
-                    continue
-            
-            if doc and isim.lower() in doc.lower():
-                sonuclar.append(doc)
-            if len(sonuclar) >= max_sonuc:
-                break
-    except:
-        pass
-    return sonuclar
-
 def hafizayi_ara(konusulan_kisi, sorgu):
     parcalar = []
     kisi_temiz = konusulan_kisi.lower().strip()
     yetkili = kisi_temiz in ["berkay", "berkay taygurt"]
 
+    # 1. Konuşulan kişinin kendi geçmişi
     try:
         kisi_sonuc = vector_store.similarity_search(
             query=sorgu, k=5, filter={"source": kisi_temiz}
@@ -205,6 +172,7 @@ def hafizayi_ara(konusulan_kisi, sorgu):
     except:
         pass
     
+    # 2. Yetkili (Berkay) için genel hafıza taraması
     if yetkili:
         try:
             genel = vector_store.similarity_search(query=sorgu, k=5)
@@ -214,10 +182,23 @@ def hafizayi_ara(konusulan_kisi, sorgu):
         except:
             pass
             
-    for isim in mesajdaki_isimleri_bul(sorgu) - {konusulan_kisi}:
-        for doc in keyword_ara(isim, konusulan_kisi):
-            if not any(doc in p for p in parcalar):
-                parcalar.append(f"[{isim} hakkında]:\n{doc}")
+    # 3. Mesajda adı geçen DİĞER kişiler için HIZLI tarama (keyword_ara yerine)
+    bahsedilen_kisiler = mesajdaki_isimleri_bul(sorgu) - {konusulan_kisi}
+    for isim in bahsedilen_kisiler:
+        try:
+            isim_sonuc = vector_store.similarity_search(query=isim, k=3)
+            for i, doc in enumerate(isim_sonuc):
+                # Gizlilik: Berkay değilsen, başkasının kaydını göremezsin
+                meta = doc.metadata
+                if meta and "source" in meta:
+                    kaynak = meta["source"].lower().strip()
+                    if not yetkili and kaynak != kisi_temiz:
+                        continue
+                if isim.lower() in doc.page_content.lower():
+                    if not any(doc.page_content in p for p in parcalar):
+                        parcalar.append(f"[{isim} hakkında]:\n{doc.page_content}")
+        except:
+            pass
                 
     return "\n\n".join(parcalar)
 
