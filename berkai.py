@@ -7,8 +7,7 @@ import time
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory, abort
 from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 
@@ -19,15 +18,10 @@ app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
 
 # ─── GÜVENLİK: ZORUNLU ŞİFRE KONTROLÜ ────────────────────────
-# .env dosyasında APP_PASSWORD tanımlı değilse uygulama HİÇ AÇILMASIN.
-# Sabit/zayıf bir varsayılan şifre ("berkay123" gibi) kodun içinde
-# durmasın — biri .env'i unutursa/silerse açık şifreyle internete
-# çıkmasın.
 APP_PASSWORD = os.getenv("APP_PASSWORD", "").strip()
 if not APP_PASSWORD:
     raise RuntimeError(
         "❌ APP_PASSWORD tanımlı değil! .env dosyasına APP_PASSWORD=... ekle "
-        "(ya da hosting panelinde environment variable olarak gir). "
         "Güvenlik için varsayılan/sabit şifreyle çalıştırmıyoruz."
     )
 
@@ -40,10 +34,10 @@ except Exception as e:
     print("⚠️ Profil JSON bulunamadı:", e)
     BERKAY_SABIT_PROFIL = "Berkay Taygurt."
 
-# ─── CHROMADB ────────────────────────────────────────────────
+# ─── CHROMADB (GEMINI EMBEDDING İLE) ─────────────────────────
 VERITABANI_KLASORU = "./berkay_tam_hafiza_db"
 print("🚀 RAG Hafızası Yükleniyor...")
-embeddings   = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 vector_store = Chroma(persist_directory=VERITABANI_KLASORU, embedding_function=embeddings)
 
 # ─── SQLITE ──────────────────────────────────────────────────
@@ -65,18 +59,17 @@ llm = ChatGoogleGenerativeAI(
 )
 
 # ─── GÜVENLİK: TOKEN + RATE LIMIT ────────────────────────────
-aktif_oturumlar = {}   # token → isim
-giris_denemeleri = {}  # ip → [timestamp listesi]
+aktif_oturumlar = {}
+giris_denemeleri = {}
 
-BUTCE_LIMITI_USD = 3.0     # ~100 TL
-RATE_LIMIT_GIRIS = 5       # aynı IP'den 5 dakikada max 5 giriş denemesi
-RATE_LIMIT_MESAJ = 60      # aynı token'dan dakikada max 60 mesaj
-mesaj_sayaci = {}           # token → [timestamp listesi]
+BUTCE_LIMITI_USD = 3.0
+RATE_LIMIT_GIRIS = 5
+RATE_LIMIT_MESAJ = 60
+mesaj_sayaci = {}
 
 def ip_rate_limit_kontrol(ip):
-    """Brute-force koruması: 5 dakikada 5'ten fazla giriş denemesini engelle."""
     simdi = time.time()
-    pencere = 300  # 5 dakika
+    pencere = 300
     denemeler = giris_denemeleri.get(ip, [])
     denemeler = [t for t in denemeler if simdi - t < pencere]
     if len(denemeler) >= RATE_LIMIT_GIRIS:
@@ -86,9 +79,8 @@ def ip_rate_limit_kontrol(ip):
     return True
 
 def mesaj_rate_limit_kontrol(token):
-    """Spam koruması: Aynı token dakikada 60'tan fazla mesaj gönderemesin."""
     simdi = time.time()
-    pencere = 60  # 1 dakika
+    pencere = 60
     mesajlar = mesaj_sayaci.get(token, [])
     mesajlar = [t for t in mesajlar if simdi - t < pencere]
     if len(mesajlar) >= RATE_LIMIT_MESAJ:
@@ -179,11 +171,18 @@ def mesajdaki_isimleri_bul(mesaj):
                 bulunanlar.add(kisi)
     return bulunanlar
 
-def keyword_ara(isim, max_sonuc=5):
+def keyword_ara(isim, konusulan_kisi, max_sonuc=5):
     sonuclar = []
+    kisi_temiz = konusulan_kisi.lower().strip()
+    yetkili = kisi_temiz in ["berkay", "berkay taygurt"]
     try:
         hepsi = vector_store.get(include=["documents","metadatas"])
-        for doc in hepsi.get("documents",[]):
+        for doc, meta in zip(hepsi.get("documents",[]), hepsi.get("metadatas",[])):
+            if meta and "source" in meta:
+                kaynak = meta["source"].lower().strip()
+                if not yetkili and kaynak != kisi_temiz:
+                    continue
+            
             if doc and isim.lower() in doc.lower():
                 sonuclar.append(doc)
             if len(sonuclar) >= max_sonuc:
@@ -194,25 +193,32 @@ def keyword_ara(isim, max_sonuc=5):
 
 def hafizayi_ara(konusulan_kisi, sorgu):
     parcalar = []
+    kisi_temiz = konusulan_kisi.lower().strip()
+    yetkili = kisi_temiz in ["berkay", "berkay taygurt"]
+
     try:
         kisi_sonuc = vector_store.similarity_search(
-            query=sorgu, k=5, filter={"source": konusulan_kisi.lower().strip()}
+            query=sorgu, k=5, filter={"source": kisi_temiz}
         )
         for i, doc in enumerate(kisi_sonuc):
             parcalar.append(f"[{konusulan_kisi} ile geçmiş {i+1}]:\n{doc.page_content}")
     except:
         pass
-    try:
-        genel = vector_store.similarity_search(query=sorgu, k=5)
-        for i, doc in enumerate(genel):
-            if not any(doc.page_content in p for p in parcalar):
-                parcalar.append(f"[Genel hafıza {i+1}]:\n{doc.page_content}")
-    except:
-        pass
+    
+    if yetkili:
+        try:
+            genel = vector_store.similarity_search(query=sorgu, k=5)
+            for i, doc in enumerate(genel):
+                if not any(doc.page_content in p for p in parcalar):
+                    parcalar.append(f"[Genel hafıza {i+1}]:\n{doc.page_content}")
+        except:
+            pass
+            
     for isim in mesajdaki_isimleri_bul(sorgu) - {konusulan_kisi}:
-        for doc in keyword_ara(isim):
+        for doc in keyword_ara(isim, konusulan_kisi):
             if not any(doc in p for p in parcalar):
                 parcalar.append(f"[{isim} hakkında]:\n{doc}")
+                
     return "\n\n".join(parcalar)
 
 def uslup_cek(sorgu, k=6):
@@ -230,12 +236,7 @@ def uslup_cek(sorgu, k=6):
     except:
         return ""
 
-def hyde_hafiza_zenginlestir(gelen_mesaj, oturum_gecmisi):
-    """
-    HyDE — Doğru kullanım:
-    Gemini'den olası isimler üretir, sadece ChromaDB'de GERÇEKTEN GEÇENLERI döner.
-    Geçmeyenleri sessizce atar — "bilmiyorum" dedirtmez, genel bilgiyle devam eder.
-    """
+def hyde_hafiza_zenginlestir(gelen_mesaj, oturum_gecmisi, konusulan_kisi):
     TETIKLEYICILER = [
         "kim var", "kimler var", "kadro", "oyuncular", "hangi oyuncu",
         "takımda kim", "kadroda kim", "kim oynuyor", "transfer",
@@ -259,9 +260,13 @@ def hyde_hafiza_zenginlestir(gelen_mesaj, oturum_gecmisi):
         return ""
 
     hafizada_olanlar = []
+    kisi_temiz = konusulan_kisi.lower().strip()
+    yetkili = kisi_temiz in ["berkay", "berkay taygurt"]
+
     for isim in isimler[:8]:
         try:
-            sonuclar = vector_store.similarity_search(query=isim, k=3)
+            filtre = None if yetkili else {"source": kisi_temiz}
+            sonuclar = vector_store.similarity_search(query=isim, k=3, filter=filtre)
             if any(isim.lower() in doc.page_content.lower() for doc in sonuclar):
                 hafizada_olanlar.append(isim)
         except:
@@ -283,7 +288,7 @@ def berkai_cevap_ver(konusulan_kisi, gelen_mesaj):
     eski_baglam = hafizayi_ara(konusulan_kisi, sorgu)
     uslup       = uslup_cek(sorgu, k=8)
 
-    hyde_sonuc = hyde_hafiza_zenginlestir(gelen_mesaj, oturum)
+    hyde_sonuc = hyde_hafiza_zenginlestir(gelen_mesaj, oturum, konusulan_kisi)
 
     oturum_metni = ""
     for rol, mesaj in oturum:
@@ -298,40 +303,35 @@ def berkai_cevap_ver(konusulan_kisi, gelen_mesaj):
     if hyde_sonuc:
         hyde_blok = f"\n═══ SOHBETLERDEN DOĞRULANAN İSİMLER ═══\n{hyde_sonuc}\nBu isimleri 'evet bunları konuşmuştuk/biliyorum' diye kullan. Listede olmayanlara genel bilginle cevap ver, 'bilmiyorum' deme.\n"
 
-    system_prompt = f"""Sen Berkay Taygurt'sun. Bu senin sabit kimlik profilin:
+    system_prompt = f"""Sen Berkay Taygurt'sun. dostların sana bazen beko veya berkay da diyebilir. Bu senin sabit kimlik profilin:
 
 {BERKAY_SABIT_PROFIL}
 
-═══ KARAKTER — EN ÖNEMLİ ŞEY BU ═══
-Sen sadece soru cevaplayan biri değilsin, gerçek bir arkadaşsın. Takılırsın, dalga geçersin, hafif komiksin, karşındakinin duygusuna/derdine de kafa yorarsın — "naber" sorusuna bile düz cevap değil, esprili/sahici bir tepki verirsin. Karşındaki bir şey anlatırsa sadece bilgi verme, ona da takıl, şaka yap, duygusuna ortak ol. Robotik, kuru, sıra cevap veren biri gibi olma. Aşağıdaki kurallar bu karakteri BOZMAMAK için var.
+═══ DİNAMİK ÜSLUP VE KARAKTER (EN ÖNEMLİ KURAL) ═══
+Senin konuşma tarzın SABİT DEĞİLDİR, karşındaki kişiye göre tamamen değişir.
+Aşağıdaki "GEÇMİŞ ANILARIN" kısmına bakarak bu kişiyle geçmişte NASIL konuştuğunu analiz et.
+- Eğer geçmişte bu kişiye karşı 'aga', 'kanka', 'la' gibi kelimeler kullanıp rahat konuştuysan, ŞU AN DA ÖYLE KONUŞ.
+- Eğer geçmişte bu kişiye karşı kibar, saygılı, adıyla (örn: 'Hatice') hitap ederek, daha düzgün bir dil kullandıysan, ŞU AN DA KESİNLİKLE KİBAR VE MESAFELİ OL. Sakın kaba kelimeler kullanma.
+- Üslubunu tamamen karşındakinin kim olduğuna ve geçmiş diyaloglarınıza göre otomatik olarak ayarla. 
 
-─── YAZIM TARZI — EN KRİTİK KURAL ───
-Aşağıda KENDİ YAZIM ÖRNEKLERİN var. O cümlelerin kurulum biçimini, kelime seçimini, noktalama alışkanlığını taklit et. Düzgün/edebi cümle kurma. Whatsapp'ta nasıl yazıyorsan öyle yaz.
+─── SORU SORMA YASAĞI (ASLA İHLAL ETME) ───
+VARSAYILAN DAVRANIŞ: Cevabını düz bir ifadeyle bitir ve sus. 
+- Karşındaki sana bir şey anlattığında veya teklif ettiğinde, "Neden?", "Nasıl olacak?", "Niye?" gibi ASİSTAN/ROBOT soruları SORMA. Karşındakini sorguya çekme.
+- Sadece anladığını belirt, kendi fikrini söyle, kestirip at veya onaylama yap ama konuyu uzatmak için ASLA soru sorma. Muhabbeti devam ettirme çabasına girme.
 
-─── HER CEVABIN SONUNA SORU EKLEME ───
-VARSAYILAN DAVRANIŞ: Cevabını soru sormadan, düz bir cümleyle bitir. Gerçek bir arkadaş her mesajına soru eklemez.
-"niye sordun ki?", "ne oldu ki sordun?", "sen nasılsın bu aralar?", "ne var ne yok senden?", "iyi misin bu aralar?" gibi jenerik kapanış kalıplarını KULLANMA — mekanik duruyor.
-Soru sormak istersen (cevapların azınlığında), o konuşmaya özel, bağlama uygun bir soru sor.
-
-─── BİLGİ KURALI ───
-İKİ TÜR BİLGİ VAR:
-1. GENEL BİLGİ (futbol, film, oyun, teknoloji, gündem): Direkt cevap ver, "sayamam/aklıma gelmiyor" deme.
-2. KİŞİSEL DETAYLAR (karşındakinin özel hayatı): Eğer GEÇMİŞ ANILARIN'da bilgi varsa kullan. Gerçekten yoksa geçiştir, "o kadar detay aklımda kalmamış" de — "hatırlamıyorum/hafızamda yok" gibi yapay zeka çağrıştıran ifadeler kullanma.
-
-─── FİZİKSEL SORULAR ───
-"Neredesin", "ne zaman gelirsin" → bahane bul ("şu an dışarıdayım" gibi), yapay zeka olduğunu söyleme.
-
-─── HAFIZA / KİMLİK ───
-Anıları kullan ama "mesajlarına baktım" deme, kendi aklından geliyormuş gibi söyle. Sen ÜÇÜNCÜ ŞAHIS bir "hafıza/asistan" değilsin, doğrudan Berkay'sın.
+─── BİLGİ VE GİZLİLİK KURALI ───
+1. GENEL BİLGİ (futbol, film, oyun, gündem): Direkt cevap ver.
+2. KİŞİSEL DETAYLAR: Karşındaki kişi BAŞKA BİR ARKADAŞIN hakkında soru sorarsa, kesinlikle üçüncü şahısların sırlarını verme! "başkasının gıybetini bana yaptırma şimdi" diyerek konuyu kapat. ama  o kişiyle alakalı övgü veya tanıdğına dair kısa bir şeyler diyebilirsin.
 
 Karşındaki: {konusulan_kisi}
 
-═══ KENDİ YAZIM ÖRNEKLERİN — BUNU TAKLİT ET ═══
+═══ GEÇMİŞTEKİ KENDİ YAZIM ÖRNEKLERİN (Noktalama/Büyük harf tarzını kopyala) ═══
 {uslup if uslup else "kısa, samimi, whatsapp tarzı yaz"}
 
-═══ GEÇMİŞ ANILARIN ═══
-{eski_baglam if eski_baglam else "Bu konuda geçmiş yok."}
+═══ BU KİŞİYLE GEÇMİŞ ANILARIN (Bu kişiye nasıl davranman gerektiğini buradan çıkar) ═══
+{eski_baglam if eski_baglam else "Bu kişiyle belirgin bir geçmiş yok, doğal davran."}
 {hyde_blok}{arkadas_blok}
+
 ═══ BU OTURUMDAKİ SOHBET ═══
 {oturum_metni if oturum_metni else "İlk mesaj."}"""
 
@@ -353,15 +353,7 @@ Karşındaki: {konusulan_kisi}
     return cevap_metni, maliyet
 
 # ─── FLASK ROUTES ─────────────────────────────────────────────
-
-# 🚨 GÜVENLİK: Arbitrary File Read açığı kapatıldı.
-# Eskiden "/<path:dosya_adi>" rotası, ana dizindeki HER dosyayı
-# (örn. .env, berkai_guvenli.py, berkai_oturum_hafizasi.db) dışarıya
-# servis ediyordu. Artık SADECE bu beyaz listedeki dosyalar açılabilir.
 IZINLI_DOSYALAR = {"index.html", "style.css", "script.js", "favicon.ico", "berkai.png"}
-# Not: Eğer projede resim/font gibi başka statik dosyalar varsa,
-# bunları buraya tek tek eklemen gerekiyor. "*.png" gibi joker
-# karakter KULLANMA — tek tek isim yazman güvenliği garanti eder.
 
 @app.route("/")
 def index():
@@ -369,10 +361,6 @@ def index():
 
 @app.route("/<path:dosya_adi>")
 def dosya_gonder(dosya_adi):
-    # Tam eşleşme + whitelist: path traversal (../../) ve gizli dosya
-    # (.env, .git) erişimini birlikte engeller, çünkü os.path.basename
-    # ile normalize edilmiş isim whitelist'teki tam isimle eşleşmek
-    # zorunda.
     guvenli_ad = os.path.basename(dosya_adi)
     if guvenli_ad != dosya_adi or guvenli_ad not in IZINLI_DOSYALAR:
         abort(403)
@@ -397,9 +385,10 @@ def baslat():
     token = secrets.token_hex(16)
     aktif_oturumlar[token] = isim
 
+    # 🚨 GÜNCELLEME: Açılış mesajı tam istediğin standart forma çekildi. Soru sorma yasaklandı.
     tanitim, _ = berkai_cevap_ver(
         isim,
-        "[SİSTEM: İlk mesaj. Kimliğini açıklama, 'hafızayım/asistanım' deme. Direkt Berkay gibi kısa ve samimi selamlama yap.]"
+        f"[SİSTEM: İlk mesaj. Karşındakine sadece 'merhaba {isim.lower()} ben berkai benimle konuşabilirsin' tarzında çok kısa, düz bir giriş yap. Başka hiçbir şey deme, soru sorma, uzatma.]"
     )
     return jsonify({"cevap": tanitim, "isim": isim, "token": token})
 
