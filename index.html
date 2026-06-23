@@ -491,15 +491,23 @@ async function sohbetiBaslat() {
         const res = await fetch("/baslat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // Arka plana hem ismi hem şifreyi paketleyip atıyoruz
             body: JSON.stringify({ isim, sifre })
         });
         
         yuklenmeMesajlariDurdur();
         
+        // 🚨 DÜZELTİLEN KISIM: Sunucu HTML dönerse patlamaması için try-catch eklendi
         if (!res.ok) {
-            const errData = await res.json();
-            alert(errData.hata || "Giriş başarısız!");
+            let hataMesaji = `Sunucu Hatası (${res.status})`;
+            try {
+                // Sadece gerçekten JSON gelirse bunu okur
+                const errData = await res.json();
+                if (errData && errData.hata) hataMesaji = errData.hata;
+            } catch (parseHata) {
+                // JSON değilse (HTML hata sayfasıysa) burası çalışır
+                hataMesaji = `Sunucu çöktü veya uyanamadı. (Hata Kodu: ${res.status})`;
+            }
+            alert(hataMesaji);
             btn.disabled = false;
             btn.textContent = "Sohbete Başla";
             sifreInput.value = "";
@@ -509,9 +517,7 @@ async function sohbetiBaslat() {
 
         const data = await res.json();
         
-        // 🚨 KRİTİK GÜNCELLEME: Sunucunun verdiği bileti (token) kaydediyoruz
         aktifToken = data.token;
-        // sessionStorage'a da yazıyoruz ki sayfa yenilenince oturum kaybolmasın
         sessionStorage.setItem("berkai_token", aktifToken);
         sessionStorage.setItem("berkai_isim", kullaniciAdi);
         
@@ -524,7 +530,8 @@ async function sohbetiBaslat() {
         
     } catch (e) {
         yuklenmeMesajlariDurdur();
-        alert("Bağlantı hatası oluştu!");
+        // 🚨 DÜZELTİLEN KISIM: Ağa veya bağlantıya dair gerçek sebebi de yazdırıyoruz
+        alert("Gerçek Bağlantı Hatası: " + e.message);
         btn.disabled = false;
         btn.textContent = "Sohbete Başla";
     }
