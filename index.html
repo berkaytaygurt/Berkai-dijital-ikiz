@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- GÜVENLİK: Content-Security-Policy — dışarıdan script enjeksiyonuna karşı ekstra katman.
          Sadece kendi sunucumuzdan ve Google Fonts'tan script/stil/resim kabul ediyoruz. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self'; connect-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'; connect-src 'self';">
     <title>Berkai</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -436,6 +436,38 @@
             }
         });
 
+// Sunucu "uykudaysa" (Render free tier 15 dk hareketsizlikte uyutuyor),
+// ilk açılış 10-30 saniye sürebilir. Bu süre boyunca butonda sırayla
+// değişen komik mesajlar gösteriyoruz, "Doğrulanıyor..." gibi sıkıcı
+// sabit bir yazı yerine.
+const YUKLENME_MESAJLARI = [
+    "Beyin açılıyor...",
+    "Anılar tozu siliniyor...",
+    "Berkay'ı uyandırıyoruz...",
+    "Hafıza kartı takılıyor...",
+    "Espri modülü ısınıyor...",
+    "WhatsApp geçmişi taranıyor...",
+    "Kafadan ekran kartı çalışıyor...",
+];
+
+let yuklenmeInterval = null;
+
+function yuklenmeMesajlariBaslat(btn) {
+    let i = 0;
+    btn.textContent = YUKLENME_MESAJLARI[0];
+    yuklenmeInterval = setInterval(() => {
+        i = (i + 1) % YUKLENME_MESAJLARI.length;
+        btn.textContent = YUKLENME_MESAJLARI[i];
+    }, 1800);
+}
+
+function yuklenmeMesajlariDurdur() {
+    if (yuklenmeInterval) {
+        clearInterval(yuklenmeInterval);
+        yuklenmeInterval = null;
+    }
+}
+
 async function sohbetiBaslat() {
     const input = document.getElementById("isim-input");
     const sifreInput = document.getElementById("sifre-input");
@@ -455,7 +487,7 @@ async function sohbetiBaslat() {
 
     kullaniciAdi = isim;
     btn.disabled = true;
-    btn.textContent = "Doğrulanıyor...";
+    yuklenmeMesajlariBaslat(btn);
 
     try {
         const res = await fetch("/baslat", {
@@ -464,6 +496,8 @@ async function sohbetiBaslat() {
             // Arka plana hem ismi hem şifreyi paketleyip atıyoruz
             body: JSON.stringify({ isim, sifre })
         });
+        
+        yuklenmeMesajlariDurdur();
         
         if (!res.ok) {
             const errData = await res.json();
@@ -491,6 +525,7 @@ async function sohbetiBaslat() {
         document.getElementById("mesaj-input").focus();
         
     } catch (e) {
+        yuklenmeMesajlariDurdur();
         alert("Bağlantı hatası oluştu!");
         btn.disabled = false;
         btn.textContent = "Sohbete Başla";
