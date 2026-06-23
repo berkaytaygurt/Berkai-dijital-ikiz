@@ -1,0 +1,9 @@
+flask
+python-dotenv
+langchain-chroma
+langchain-huggingface
+langchain-google-genai
+langchain-core
+chromadb
+sentence-transformers
+gunicorn

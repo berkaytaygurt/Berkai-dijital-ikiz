@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- GÜVENLİK: Content-Security-Policy — dışarıdan script enjeksiyonuna karşı ekstra katman.
+         Sadece kendi sunucumuzdan ve Google Fonts'tan script/stil/resim kabul ediyoruz. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self'; connect-src 'self';">
+    <title>Berkai</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a1128;
+            --card-border: #141e30;
+            --card-bg: #eef2f6;
+            --text-dark: #111a2c;
+            --text-muted: #5a6a85;
+            --primary-blue: #2563eb;
+            --primary-hover: #1d4ed8;
+            --chat-bg: #0c1524;
+            --msg-user: #2563eb;
+            --msg-bot: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            
+        }
+
+        /* ─── GİRİŞ EKRANI ─────────────────────────────── */
+        #giris-ekrani {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: radial-gradient(circle at center, #111c3a 0%, var(--bg-dark) 100%);
+            overflow-y: auto;
+        }
+
+        #giris-ekrani.gizli {
+            display: none;
+        }
+
+        .login-card-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            margin-top: 70px; /* Avatar büyüdüğü için boşluğu artırdık */
+        }
+
+        /* Dışarı taşan BÜYÜTÜLMÜŞ avatar */
+        .avatar-container {
+            position: absolute;
+            top: -70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px; /* Büyütüldü */
+            height: 140px; /* Büyütüldü */
+            z-index: 10;
+            filter: drop-shadow(0 12px 20px rgba(0,0,0,0.35));
+        }
+
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Ana Kart */
+        .login-card {
+            background: var(--card-bg);
+            border: 8px solid var(--card-border);
+            border-radius: 28px;
+            padding: 80px 24px 32px 24px; /* Üstten boşluk avatar için artırıldı */
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .typewriter-text {
+            color: var(--text-dark);
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        .typewriter-text span {
+            border-right: 2px solid var(--text-dark);
+            animation: blink 0.7s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { border-color: transparent; }
+            50% { border-color: var(--text-dark); }
+        }
+
+        .alt-bilgi {
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        #isim-input {
+            width: 100%;
+            background: #ffffff;
+            border: 2px solid #d1d5db;
+            color: var(--text-dark);
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            outline: none;
+            text-align: center;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+#isim-input, #sifre-input {
+            width: 100%;
+            background: #ffffff;
+            border: 2px solid #d1d5db;
+            color: var(--text-dark);
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            outline: none;
+            text-align: center;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        #isim-input:focus, #sifre-input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        #isim-input::placeholder, #sifre-input::placeholder {
+            color: #9ca3af;
+            font-weight: 600;
+        }
+        #baslat-btn {
+            width: 100%;
+            background: var(--primary-blue);
+            border: none;
+            color: white;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        #baslat-btn:active {
+            transform: scale(0.98);
+        }
+
+        #baslat-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ─── SOHBET EKRANI ─────────────────────────────── */
+        #sohbet-ekrani {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            background: var(--chat-bg);
+            background-image: radial-gradient(circle at center, rgba(255,255,255,0.02) 0%, transparent 100%);
+        }
+
+        #sohbet-ekrani.aktif {
+            display: flex;
+        }
+
+        #header {
+            background: rgba(14, 22, 40, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .header-avatar {
+            width: 44px;
+            height: 44px;
+            background: var(--card-bg);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 2px solid var(--primary-blue);
+        }
+
+        #baslik-blok { line-height: 1.2; }
+        #berkai-adi { font-size: 17px; font-weight: 800; letter-spacing: 0.5px; }
+        #durum { font-size: 13px; color: #34d399; font-weight: 600; }
+
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        /* Mesaj Balonları */
+        .mesaj-satiri {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            animation: msg-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes msg-in {
+            from { opacity: 0; transform: translateY(15px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .mesaj-satiri.kullanici-satiri { justify-content: flex-end; }
+        .mesaj-satiri.berkai-satiri { justify-content: flex-start; }
+
+        .msg-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mesaj {
+            max-width: 75%;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.5;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .kullanici {
+            background: var(--msg-user);
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+        }
+
+        .berkai {
+            background: var(--msg-bot);
+            color: #f8fafc;
+            border-radius: 18px 18px 18px 4px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Yazıyor animasyonu */
+        .yaziyor {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            background: var(--msg-bot);
+            border-radius: 18px 18px 18px 4px;
+            width: fit-content;
+        }
+        .dot {
+            width: 6px; height: 6px;
+            background: #94a3b8;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        #input-area {
+            background: rgba(14, 22, 40, 0.95);
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        }
+
+        #mesaj-input {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ffffff;
+            padding: 14px 18px;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #mesaj-input:focus { border-color: var(--primary-blue); }
+        #mesaj-input::placeholder { color: #64748b; }
+
+        #gonder-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        #gonder-btn:hover { background: var(--primary-hover); transform: scale(1.05); }
+        #gonder-btn:active { transform: scale(0.95); }
+        #gonder-btn svg { fill: white; margin-left: 2px; }
+
+        /* Scrollbar Gizleme */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 75px 20px 24px 20px; border-width: 6px; }
+            .typewriter-text { font-size: 20px; }
+            .mesaj { max-width: 85%; font-size: 14px; }
+            #header { padding: 12px 16px; }
+            #input-area { padding: 12px 16px; }
+            
+            /* Mobilde avatarı ekrana sığsın diye hafif küçülttük */
+            .avatar-container {
+                width: 120px; 
+                height: 120px; 
+                top: -60px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="giris-ekrani">
+        <div class="login-card-wrapper">
+            <div class="avatar-container">
+                <img src="berkai.png" style="width:100%; height:100%; object-fit:cover; border-radius: 50%; border: 6px solid #ffffff; background-color: #eef2f6; box-shadow: 0 12px 25px rgba(0,0,0,0.4);" alt="Berkai Avatar">
+            </div>
+            
+            <div class="login-card">
+                <div class="typewriter-text" style="margin-bottom: 4px; font-size: 28px;">Berkai</div>
+                <div class="typewriter-text" style="font-size: 18px;">Yapay Ama Doğal Dostun<span></span></div>
+                <div class="alt-bilgi">Berkay'ın dijital kopyasıyla sohbete başla</div>
+                
+                <input id="isim-input" placeholder="Adın ne?" autocomplete="off" autofocus maxlength="40">
+                
+                <input id="sifre-input" type="password" placeholder="Erişim Şifresi" autocomplete="off" maxlength="100" onkeydown="if(event.key==='Enter') sohbetiBaslat()">
+                
+                <button id="baslat-btn" onclick="sohbetiBaslat()">Sohbete Başla</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sohbet-ekrani">
+<div id="header">
+            <div class="header-avatar" style="overflow: hidden; border: 2px solid #ffffff; background-color: #eef2f6;">
+                <img src="berkai.png" style="width: 100%; height: 100%; object-fit: cover;" alt="B">
+            </div>
+            <div id="baslik-blok">
+                <div id="berkai-adi">Berkai</div>
+                <div id="durum">Senin için her zaman çevrimiçi</div>
+            </div>
+        </div>
+
+        <div id="chat"></div>
+
+        <div id="input-area">
+            <input id="mesaj-input" placeholder="Mesaj yaz..." autocomplete="off" maxlength="1000" onkeydown="if(event.key==='Enter') mesajGonder()">
+            <button id="gonder-btn" onclick="mesajGonder()">
+                <svg width="22" height="22" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+
+        // GÜVENLİK NOTU: Token'ı sessionStorage'da tutuyoruz.
+        // - localStorage YERİNE sessionStorage kullanıyoruz: sekme/tarayıcı
+        //   kapanınca otomatik silinir, kalıcı sızıntı riski daha düşük.
+        // - Mesajlar textContent ile basıldığı için (innerHTML değil) XSS
+        //   riski zaten düşük, bu yüzden token'ı JS değişkeninde tutmak
+        //   yerine sessionStorage'a almak makul bir denge: sayfa
+        //   yenilendiğinde oturum kaybolmuyor, ama sekme kapanınca silinir.
+        let aktifToken = sessionStorage.getItem("berkai_token") || "";
+        let kullaniciAdi = sessionStorage.getItem("berkai_isim") || "";
+
+        // Sayfa açılışında, eğer önceden geçerli bir token varsa
+        // (sekme yenilendiyse) doğrudan sohbet ekranına geç.
+        window.addEventListener("DOMContentLoaded", () => {
+            if (aktifToken) {
+                document.getElementById("giris-ekrani").classList.add("gizli");
+                document.getElementById("sohbet-ekrani").classList.add("aktif");
+            }
+        });
+
+async function sohbetiBaslat() {
+    const input = document.getElementById("isim-input");
+    const sifreInput = document.getElementById("sifre-input");
+    const btn = document.getElementById("baslat-btn");
+    
+    const isim = input.value.trim();
+    const sifre = sifreInput.value.trim();
+    
+    if (!isim) {
+        input.focus();
+        return;
+    }
+    if (!sifre) {
+        sifreInput.focus();
+        return;
+    }
+
+    kullaniciAdi = isim;
+    btn.disabled = true;
+    btn.textContent = "Doğrulanıyor...";
+
+    try {
+        const res = await fetch("/baslat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // Arka plana hem ismi hem şifreyi paketleyip atıyoruz
+            body: JSON.stringify({ isim, sifre })
+        });
+        
+        if (!res.ok) {
+            const errData = await res.json();
+            alert(errData.hata || "Giriş başarısız!");
+            btn.disabled = false;
+            btn.textContent = "Sohbete Başla";
+            sifreInput.value = "";
+            sifreInput.focus();
+            return;
+        }
+
+        const data = await res.json();
+        
+        // 🚨 KRİTİK GÜNCELLEME: Sunucunun verdiği bileti (token) kaydediyoruz
+        aktifToken = data.token;
+        // sessionStorage'a da yazıyoruz ki sayfa yenilenince oturum kaybolmasın
+        sessionStorage.setItem("berkai_token", aktifToken);
+        sessionStorage.setItem("berkai_isim", kullaniciAdi);
+        
+        document.getElementById("giris-ekrani").classList.add("gizli");
+        document.getElementById("sohbet-ekrani").classList.add("aktif");
+        
+        if (typeof yaziyorGizle === "function") yaziyorGizle();
+        mesajEkle("berkai", data.cevap);
+        document.getElementById("mesaj-input").focus();
+        
+    } catch (e) {
+        alert("Bağlantı hatası oluştu!");
+        btn.disabled = false;
+        btn.textContent = "Sohbete Başla";
+    }
+}
+
+function mesajEkle(tip, metin) {
+    const chat = document.getElementById("chat");
+    const satir = document.createElement("div");
+    satir.className = `mesaj-satiri ${tip}-satiri`;
+
+    if (tip === "berkai") {
+        const avatar = document.createElement("div");
+        avatar.className = "msg-avatar";
+        avatar.innerHTML = '<img src="berkai.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">';
+        satir.appendChild(avatar);
+    }
+
+    const balon = document.createElement("div");
+    balon.className = `mesaj ${tip}`;
+    // GÜVENLİK: textContent kullanılıyor (innerHTML DEĞİL).
+    // Kullanıcı veya bot mesajına <script> yazılsa bile kod olarak
+    // çalışmaz, sadece düz metin olarak görünür. XSS açığına karşı
+    // bu satırı asla innerHTML'e çevirme.
+    balon.textContent = metin;
+    satir.appendChild(balon);
+
+    chat.appendChild(satir);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+        function yaziyorGoster() {
+            const chat = document.getElementById("chat");
+            const satir = document.createElement("div");
+            satir.className = "mesaj-satiri berkai-satiri";
+            satir.id = "yaziyor-gostergesi";
+
+            const avatar = document.createElement("div");
+            avatar.className = "msg-avatar";
+            avatar.innerHTML = '<img src="berkai.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">';
+            satir.appendChild(avatar);
+
+            const balon = document.createElement("div");
+            balon.className = "yaziyor";
+            balon.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            satir.appendChild(balon);
+
+            chat.appendChild(satir);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function yaziyorGizle() {
+            document.getElementById("yaziyor-gostergesi")?.remove();
+        }
+
+async function mesajGonder() {
+    const input = document.getElementById("mesaj-input");
+    const mesaj = input.value.trim();
+    if (!mesaj) return;
+
+    mesajEkle("kullanici", mesaj);
+    input.value = "";
+    yaziyorGoster(); // Senin orijinal yazıyor gösterme kodun
+
+    try {
+        const res = await fetch("/sor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // 🚨 DİKKAT: credentials ve isim gitti, yerine aktifToken geldi!
+            body: JSON.stringify({ token: aktifToken, mesaj: mesaj })
+        });
+        
+        const data = await res.json();
+        yaziyorGizle();
+
+        if (res.ok) {
+            // Her şey yolundaysa cevap gelir
+            mesajEkle("berkai", data.cevap);
+        } else if (res.status === 401) {
+            // Token geçersiz/süresi dolmuş — oturumu temizleyip girişe dön
+            sessionStorage.removeItem("berkai_token");
+            sessionStorage.removeItem("berkai_isim");
+            mesajEkle("berkai", "Oturumun sona ermiş gibi görünüyor, sayfayı yenileyip tekrar giriş yapar mısın?");
+        } else {
+            // 100 TL sınırı aşıldıysa veya başka bir hata varsa burası çalışır
+            mesajEkle("berkai", "Sıkıntı var aga: " + (data.hata || "Sistem tıkandı."));
+        }
+    } catch (e) {
+        yaziyorGizle();
+        // Senin o efsane orijinal hata mesajını geri koydum!
+        mesajEkle("berkai", "Aga sistemde bir hata oldu, gitmiyor mesaj.");
+    }
+}
+    </script>
+</body>
+</html>
