@@ -11,7 +11,9 @@
 <br><br><br>
 
 <!-- Tıklanabilir Görsel Kart -->
-<a href="https://bekolomaniac-berkai.hf.space" target="_blank"><img src="buton.png?raw=true" alt="Berkai ile Sohbete Başla" width="350"></a>
+<a href="https://bekolomaniac-berkai.hf.space" target="_blank">
+  <img src="https://raw.githubusercontent.com/berkaytaygurt/berkai/main/buton.png" alt="Berkai ile Sohbete Başla" width="350">
+</a>
 
 </div>
 
