@@ -1,9 +1,6 @@
 <div align="center">
 
 <h1>🤖 Berkai - Dijital İkiz & RAG AI</h1>
-<h2>Yapay Ama Doğal Dostunuz</h2>
-
-<em>Berkay'a ulaşamadığınız anlarda yerini aratmayacak dijital bir dost.</em> <br><br>
 
 <!-- Teknoloji Rozetleri -->
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -13,14 +10,23 @@
 
 <br><br>
 
-<!-- Tıklanabilir Görsel -->
-<a href="https://bekolomaniac-bekai.hf.space">
-  <img src="giris_ekrani.png" alt="Berkai ile Konuş" width="350" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-</a>
+<!-- HTML Sohbet Kartı -->
+<div style="background-color: #f8fafc; width: 300px; padding: 30px 20px; border-radius: 20px; border: 1px solid #e2e8f0; display: inline-block; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+  <img src="berkai.png" width="110" style="border-radius: 50%; border: 4px solid #f8fafc; margin-bottom: 5px;" alt="Berkai Profil">
+  
+  <h2 style="margin: 0; color: #0f172a; font-family: sans-serif;">Berkai</h2>
+  <h4 style="margin: 5px 0 15px 0; color: #0f172a; font-family: sans-serif;">Yapay Ama Doğal Dostun</h4>
+  
+  <p style="color: #64748b; font-size: 14px; margin-bottom: 25px; font-family: sans-serif;">
+    Berkay'ın dijital kopyasıyla sohbete başla
+  </p>
+  
+  <a href="https://bekolomaniac-bekai.hf.space" target="_blank" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 0; width: 100%; border-radius: 10px; font-weight: bold; font-size: 16px; font-family: sans-serif;">
+    Sohbete Başla
+  </a>
+</div>
 
-<br>
-<h3>👇 Görselin üzerindeki <b>"Sohbete Başla"</b> butonuna tıklayıp giriş yapın 👇</h3>
-
+<br><br>
 </div>
 
 ---
