@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🤖 Berkai - Dijital İkiz & RAG AI
+#Berkai - Dijital İkiz & RAG AI
 
 ### Yapay Ama Doğal Dostunuz
 
@@ -11,7 +11,7 @@
 [![Gemini](https://img.shields.io/badge/Gemini_2.5-Flash-FF8C00?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Spaces-F5C124?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/)
 
-<h3>🟢 <a href="https://bekolomaniac-bekai.hf.space"><b>Canlı Demo'yu Buradan Test Edin</b></a> 🟢</h3>
+<h3><a href="https://bekolomaniac-berkai.hf.space"><b>berkai konuş</b></a></h3>
 
 </div>
 
