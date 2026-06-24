@@ -1,23 +1,25 @@
 <div align="center">
 
-#Berkai - Dijital İkiz & RAG AI
+<h1>🤖 Berkai - Dijital İkiz & RAG AI</h1>
+<h2>Yapay Ama Doğal Dostunuz</h2>
 
-### Yapay Ama Doğal Dostunuz
+<em>Berkay'a ulaşamadığınız anlarda yerini aratmayacak dijital bir dost.</em> <br><br>
 
-*Berkay'a ulaşamadığınız anlarda yerini aratmayacak dijital bir dost.*
-
+<!-- Teknoloji Rozetleri -->
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Gemini](https://img.shields.io/badge/Gemini_2.5-Flash-FF8C00?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Spaces-F5C124?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/)
 
-<div align="center">
-  <a href="https://bekolomaniac-bekai.hf.space">
-    <img src="berkai.png" alt="Berkai ile Konuş" width="250" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-  </a>
-  <br><br>
-  <h3>👆 <b>Berkai İle Canlı Olarak Buradan Konuşun</b> 👆</h3>
-</div>
+<br><br>
+
+<!-- Tıklanabilir Görsel -->
+<a href="https://bekolomaniac-bekai.hf.space">
+  <img src="giris_ekrani.png" alt="Berkai ile Konuş" width="350" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+</a>
+
+<br>
+<h3>👇 Görselin üzerindeki <b>"Sohbete Başla"</b> butonuna tıklayıp giriş yapın 👇</h3>
 
 </div>
 
