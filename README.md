@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>🤖 Berkai - Dijital İkiz & RAG AI</h1>
+<h1>Berkai - Dijital İkiz & RAG AI</h1>
 
 <!-- Teknoloji Rozetleri -->
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -8,25 +8,13 @@
 [![Gemini](https://img.shields.io/badge/Gemini_2.5-Flash-FF8C00?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Spaces-F5C124?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/)
 
-<br><br>
+<br><br><br>
 
-<!-- HTML Sohbet Kartı -->
-<div style="background-color: #f8fafc; width: 300px; padding: 30px 20px; border-radius: 20px; border: 1px solid #e2e8f0; display: inline-block; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
-  <img src="berkai.png" width="110" style="border-radius: 50%; border: 4px solid #f8fafc; margin-bottom: 5px;" alt="Berkai Profil">
-  
-  <h2 style="margin: 0; color: #0f172a; font-family: sans-serif;">Berkai</h2>
-  <h4 style="margin: 5px 0 15px 0; color: #0f172a; font-family: sans-serif;">Yapay Ama Doğal Dostun</h4>
-  
-  <p style="color: #64748b; font-size: 14px; margin-bottom: 25px; font-family: sans-serif;">
-    Berkay'ın dijital kopyasıyla sohbete başla
-  </p>
-  
-  <a href="https://bekolomaniac-bekai.hf.space" target="_blank" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 0; width: 100%; border-radius: 10px; font-weight: bold; font-size: 16px; font-family: sans-serif;">
-    Sohbete Başla
-  </a>
-</div>
+<!-- Tıklanabilir Görsel Kart -->
+<a href="https://bekolomaniac-bekai.hf.space" target="_blank">
+  <img src="buton.png" alt="Berkai ile Sohbete Başla" width="350">
+</a>
 
-<br><br>
 </div>
 
 ---
