@@ -12,7 +12,7 @@
 
 <!-- Tıklanabilir Görsel Kart -->
 <a href="https://bekolomaniac-berkai.hf.space" target="_blank">
-  <img src="https://raw.githubusercontent.com/berkaytaygurt/Berkai-dijital-ikiz/main/buton.png" alt="Berkai ile Sohbete Başla" width="350">
+  <img src="https://github.com/user-attachments/assets/e694d84b-cc0f-405c-ae25-5cc09d8e3f57" alt="Berkai ile Sohbete Başla" width="350">
 </a>
 
 </div>
