@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Berkai - Dijital İkiz & RAG AI</h1>
+<h1>🤖 Berkai - Dijital İkiz & RAG AI</h1>
 
 <!-- Teknoloji Rozetleri -->
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -11,10 +11,7 @@
 <br><br><br>
 
 <!-- Tıklanabilir Görsel Kart -->
-<!-- Tıklanabilir Görsel Kart -->
-<a href="https://bekolomaniac-bekai.hf.space" target="_blank">
-  <img src="https://raw.githubusercontent.com/berkaytaygurt/berkai/main/buton.png" alt="Berkai ile Sohbete Başla" width="350">
-</a>
+<a href="https://bekolomaniac-berkai.hf.space" target="_blank"><img src="buton.png?raw=true" alt="Berkai ile Sohbete Başla" width="350"></a>
 
 </div>
 
