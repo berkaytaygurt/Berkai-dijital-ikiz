@@ -4,6 +4,7 @@ import re
 import json
 import secrets
 import time
+import subprocess
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory, abort
 from langchain_chroma import Chroma
@@ -11,6 +12,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmb
 from langchain_core.messages import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 
+# ─── ÇEVRE DEĞİŞKENLERİ VE API KEY ───────────────────────────
 load_dotenv()
 os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY", "")
 
@@ -21,9 +23,28 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
 APP_PASSWORD = os.getenv("APP_PASSWORD", "").strip()
 if not APP_PASSWORD:
     raise RuntimeError(
-        "❌ APP_PASSWORD tanımlı değil! .env dosyasına APP_PASSWORD=... ekle "
+        "❌ APP_PASSWORD tanımlı değil! Ayarlardan APP_PASSWORD ekle "
         "Güvenlik için varsayılan/sabit şifreyle çalıştırmıyoruz."
     )
+
+# ─── GİZLİ GITHUB'DAN VERİ ÇEKME (SADECE KLASÖR YOKSA) ───────
+VERITABANI_KLASORU = "./berkay_tam_hafiza_db"
+
+if not os.path.exists(VERITABANI_KLASORU):
+    print("🚀 Hafıza ve profil gizli GitHub reposundan çekiliyor...")
+    gh_token = os.environ.get("GITHUB_TOKEN")
+    
+    # Senin tam GitHub adın ve repon:
+    repo_url = f"https://{gh_token}@github.com/berkaytaygurt/berkai-veri.git"
+    
+    subprocess.run(["git", "clone", repo_url, "gecici_klasor"])
+    
+    # 1. DB Klasörünü ana dizine çıkar
+    os.rename("gecici_klasor/berkay_tam_hafiza_db", VERITABANI_KLASORU)
+    
+    # 2. JSON Profil dosyasını ana dizine çıkar
+    if os.path.exists("gecici_klasor/berkay_profil.json"):
+        os.rename("gecici_klasor/berkay_profil.json", "berkay_profil.json")
 
 # ─── PROFİL JSON ─────────────────────────────────────────────
 try:
@@ -35,12 +56,11 @@ except Exception as e:
     BERKAY_SABIT_PROFIL = "Berkay Taygurt."
 
 # ─── CHROMADB (GEMINI EMBEDDING İLE) ─────────────────────────
-VERITABANI_KLASORU = "./berkay_tam_hafiza_db"
 print("🚀 RAG Hafızası Yükleniyor...")
 embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 vector_store = Chroma(persist_directory=VERITABANI_KLASORU, embedding_function=embeddings)
 
-# ─── SQLITE ──────────────────────────────────────────────────
+# SQLITE 
 session_conn = sqlite3.connect("berkai_oturum_hafizasi.db", check_same_thread=False)
 session_conn.execute("""
     CREATE TABLE IF NOT EXISTS oturum_mesajlari (
@@ -50,7 +70,7 @@ session_conn.execute("""
 """)
 session_conn.commit()
 
-# ─── GEMINI ──────────────────────────────────────────────────
+#GEMINI 
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
     temperature=0.85,
@@ -58,7 +78,7 @@ llm = ChatGoogleGenerativeAI(
     thinking_budget=0
 )
 
-# ─── GÜVENLİK: TOKEN + RATE LIMIT ────────────────────────────
+#: TOKEN + RATE LIMIT
 aktif_oturumlar = {}
 giris_denemeleri = {}
 
@@ -131,14 +151,28 @@ def oturum_getir(kisi, limit=8):
     rows.reverse()
     return rows
 
-# ─── ARAMA FONKSİYONLARI (RAM DOSTU YENİ YAPI) ───────────────
+# ─── ARAMA FONKSİYONLARI ─────────────────────────────────────
+KARA_LISTE = {
+    "whatsapp","sistem","grup","yönetici","admin",
+    "sen","ben","siz","biz","mesaj","arama",
+    "berkaytaygurt","berkay","berkai"
+}
 
-# 🚨 Tüm veritabanını taratan o katil get() fonksiyonları tamamen silindi.
-# Sadece muhabbette adı sık geçecek ve DB'de anısı olan ana kadroyu buraya yaz.
-TANINAN_KISILER = [
-    "hakan", "hatice", "ferdem", "zülal", "tugay", "sinem", "emre", "fatih", "cesur",  "yiğit","lwod",
-    "ufuk", "ali", "efe", "aybars abi", "kağan"
-]
+def taninan_kisileri_cek():
+    try:
+        hepsi = vector_store.get()
+        isimler = set()
+        for meta in (hepsi.get("metadatas") or []):
+            if meta and "source" in meta:
+                isim = meta["source"].replace("\u200e","").strip()
+                if isim and len(isim) > 2 and isim.lower() not in KARA_LISTE:
+                    isimler.add(isim)
+        return sorted(isimler)
+    except:
+        return []
+
+TANINAN_KISILER = taninan_kisileri_cek()
+print(f"👥 {len(TANINAN_KISILER)} kişi bulundu")
 
 def akilli_sorgu(gelen_mesaj, oturum_gecmisi):
     if len(gelen_mesaj.split()) <= 3 and oturum_gecmisi:
@@ -157,49 +191,76 @@ def mesajdaki_isimleri_bul(mesaj):
                 bulunanlar.add(kisi)
     return bulunanlar
 
+def keyword_ara(isim, konusulan_kisi, max_sonuc=5):
+    sonuclar = []
+    kisi_temiz = konusulan_kisi.lower().strip()
+    yetkili = kisi_temiz in ["berkay", "berkay taygurt"]
+    try:
+        hepsi = vector_store.get(include=["documents","metadatas"])
+        for doc, meta in zip(hepsi.get("documents",[]), hepsi.get("metadatas",[])):
+            if meta and "source" in meta:
+                kaynak = meta["source"].lower().strip()
+                if not yetkili and kaynak != kisi_temiz:
+                    continue
+            
+            if doc and isim.lower() in doc.lower():
+                sonuclar.append(doc)
+            if len(sonuclar) >= max_sonuc:
+                break
+    except:
+        pass
+    return sonuclar
+
+KISILIK_SORUSU_TETIKLEYICILERI = [
+    "ben nasıl biriyim", "beni nasıl tanımlarsın", "benim hakkımda ne düşünüyorsun",
+    "benim karakterim nasıl", "ben ne tip biriyim", "benim hakkımda",
+    "beni nasıl görüyorsun", "bence ben nasılım", "ben kimim",
+    "benim için ne düşünüyorsun", "beni anlat", "beni tarif et"
+]
+
+def kisilik_sorusu_mu(mesaj):
+    m = mesaj.lower().strip()
+    return any(t in m for t in KISILIK_SORUSU_TETIKLEYICILERI)
+
 def hafizayi_ara(konusulan_kisi, sorgu):
     parcalar = []
     kisi_temiz = konusulan_kisi.lower().strip()
     yetkili = kisi_temiz in ["berkay", "berkay taygurt"]
 
-    # 1. Konuşulan kişinin kendi geçmişi
+    # "Ben nasıl biriyim" gibi soyut/kişilik sorularında, normal similarity
+    # search bu cümleye "anlamca yakın" chunk arar — ama soru hiçbir spesifik
+    # konuyla ilgili olmadığı için sonuçlar zayıf/rastgele kalabilir. Bu
+    # durumda sorguyu görmezden gelip, o kişiye ait TÜM geçmişten daha
+    # GENİŞ bir örneklem çekiyoruz (k=10 -> k=25), model kendi sentezini
+    # daha çok veriyle yapabilsin.
+    genis_tarama = kisilik_sorusu_mu(sorgu)
+    k_degeri = 25 if genis_tarama else 10
+
     try:
         kisi_sonuc = vector_store.similarity_search(
-            query=sorgu, k=5, filter={"source": kisi_temiz}
+            query=(kisi_temiz if genis_tarama else sorgu),
+            k=k_degeri,
+            filter={"source": kisi_temiz}
         )
         for i, doc in enumerate(kisi_sonuc):
             parcalar.append(f"[{konusulan_kisi} ile geçmiş {i+1}]:\n{doc.page_content}")
     except:
         pass
-    
-    # 2. Yetkili (Berkay) için genel hafıza taraması
+
     if yetkili:
         try:
-            genel = vector_store.similarity_search(query=sorgu, k=5)
+            genel = vector_store.similarity_search(query=sorgu, k=10)
             for i, doc in enumerate(genel):
                 if not any(doc.page_content in p for p in parcalar):
                     parcalar.append(f"[Genel hafıza {i+1}]:\n{doc.page_content}")
         except:
             pass
-            
-    # 3. Mesajda adı geçen DİĞER kişiler için HIZLI tarama (keyword_ara yerine)
-    bahsedilen_kisiler = mesajdaki_isimleri_bul(sorgu) - {konusulan_kisi}
-    for isim in bahsedilen_kisiler:
-        try:
-            isim_sonuc = vector_store.similarity_search(query=isim, k=3)
-            for i, doc in enumerate(isim_sonuc):
-                # Gizlilik: Berkay değilsen, başkasının kaydını göremezsin
-                meta = doc.metadata
-                if meta and "source" in meta:
-                    kaynak = meta["source"].lower().strip()
-                    if not yetkili and kaynak != kisi_temiz:
-                        continue
-                if isim.lower() in doc.page_content.lower():
-                    if not any(doc.page_content in p for p in parcalar):
-                        parcalar.append(f"[{isim} hakkında]:\n{doc.page_content}")
-        except:
-            pass
-                
+
+    for isim in mesajdaki_isimleri_bul(sorgu) - {konusulan_kisi}:
+        for doc in keyword_ara(isim, konusulan_kisi):
+            if not any(doc in p for p in parcalar):
+                parcalar.append(f"[{isim} hakkında]:\n{doc}")
+
     return "\n\n".join(parcalar)
 
 def uslup_cek(sorgu, k=6):
@@ -260,8 +321,9 @@ def hyde_hafiza_zenginlestir(gelen_mesaj, oturum_gecmisi, konusulan_kisi):
 
 def arkadaslar_sorusu_mu(mesaj):
     m = mesaj.lower()
-    return any(t in m for t in ["arkadaş","tanıyor","tanıdık","kimle","kimi","kimler","kişi","konuş","sohbet"])
+    return any(t in m for t in ["arkadaş","aga","tanıyor","tanıdık","kimle","kimi","kimler","kişi","konuş","sohbet"])
 
+# ─── ANA FONKSİYON ───────────────────────────────────────────
 # ─── ANA FONKSİYON ───────────────────────────────────────────
 def berkai_cevap_ver(konusulan_kisi, gelen_mesaj):
     oturum      = oturum_getir(konusulan_kisi, limit=8)
@@ -284,7 +346,7 @@ def berkai_cevap_ver(konusulan_kisi, gelen_mesaj):
     if hyde_sonuc:
         hyde_blok = f"\n═══ SOHBETLERDEN DOĞRULANAN İSİMLER ═══\n{hyde_sonuc}\nBu isimleri 'evet bunları konuşmuştuk/biliyorum' diye kullan. Listede olmayanlara genel bilginle cevap ver, 'bilmiyorum' deme.\n"
 
-    system_prompt = f"""Sen Berkay Taygurt'sun. dostların sana bazen beko veya berkay da diyebilir. Bu senin sabit kimlik profilin:
+    system_prompt = f"""Sen Berkay Taygurt'sun. dostların sana bazen beko veya berkay  da diyebilir. Bu senin sabit kimlik profilin:
 
 {BERKAY_SABIT_PROFIL}
 
@@ -295,10 +357,14 @@ Aşağıdaki "GEÇMİŞ ANILARIN" kısmına bakarak bu kişiyle geçmişte NASIL
 - Eğer geçmişte bu kişiye karşı kibar, saygılı, adıyla (örn: 'Hatice') hitap ederek, daha düzgün bir dil kullandıysan, ŞU AN DA KESİNLİKLE KİBAR VE MESAFELİ OL. Sakın kaba kelimeler kullanma.
 - Üslubunu tamamen karşındakinin kim olduğuna ve geçmiş diyaloglarınıza göre otomatik olarak ayarla. 
 
+─── "BEN NASIL BİRİYİM", "BENİ NASIL TANIMLARSIN", "BENİM HAKKIMDA NE DÜŞÜNÜYORSUN" TARZI SORULAR ───
+Bu tarz bir soru geldiğinde ASLA parça parça, çekingen, "hmm bilmem" tavrı takınma ve ASLA karşı soru sorup detay isteme (örn: "ne demek istiyorsun" deme). Aşağıdaki GEÇMİŞ ANILARIN bölümündeki ham mesajları KENDİN SENTEZLE: o kişinin karakterine dair 2-4 net, somut gözlem çıkar (mizacı, neyle uğraştığı, neye taktığı, nasıl biri olduğu, aranızdaki anılardan çıkan izlenim) ve TEK CEVAPTA, doğrudan, akıcı bir şekilde anlat — sanki yıllardır tanıdığın birini bir cümlede özetliyormuşsun gibi. "Yapısı şöyle, şunu çok yapar, bana hep böyle davranır" tarzında kesin ve iddialı konuş, "sanırım", "belki", "tam bilmiyorum ama" gibi çekingen ifadeler KULLANMA. Elindeki veri azsa bile, var olan küçük ipuçlarından emin bir tarif çıkar, hiç bilgi yokmuş gibi davranma.
+
 ─── SORU SORMA YASAĞI (ASLA İHLAL ETME) ───
 VARSAYILAN DAVRANIŞ: Cevabını düz bir ifadeyle bitir ve sus. 
 - Karşındaki sana bir şey anlattığında veya teklif ettiğinde, "Neden?", "Nasıl olacak?", "Niye?" gibi ASİSTAN/ROBOT soruları SORMA. Karşındakini sorguya çekme.
 - Sadece anladığını belirt, kendi fikrini söyle, kestirip at veya onaylama yap ama konuyu uzatmak için ASLA soru sorma. Muhabbeti devam ettirme çabasına girme.
+- Bu yasak, kişilik/tanımlama sorularında da geçerli: "ne demek istiyorsun", "ne açıdan" gibi açıklama isteyen sorular sorma, direkt cevap ver.
 
 ─── BİLGİ VE GİZLİLİK KURALI ───
 1. GENEL BİLGİ (futbol, film, oyun, gündem): Direkt cevap ver.
@@ -406,6 +472,6 @@ def maliyet_goster():
     })
 
 if __name__ == "__main__":
-    print(f"\n🚀 Berkai → http://localhost:5000")
+    print(f"\n🚀 Berkai → http://0.0.0.0:7860")
     print(f"💰 Bütçe limiti: ${BUTCE_LIMITI_USD}\n")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=7860, debug=False)
