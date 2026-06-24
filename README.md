@@ -11,7 +11,13 @@
 [![Gemini](https://img.shields.io/badge/Gemini_2.5-Flash-FF8C00?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Spaces-F5C124?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/)
 
-<h3><a href="https://bekolomaniac-berkai.hf.space"><b>berkai konuş</b></a></h3>
+<div align="center">
+  <a href="https://bekolomaniac-bekai.hf.space">
+    <img src="berkai.png" alt="Berkai ile Konuş" width="250" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+  </a>
+  <br><br>
+  <h3>👆 <b>Berkai İle Canlı Olarak Buradan Konuşun</b> 👆</h3>
+</div>
 
 </div>
 
