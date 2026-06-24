@@ -9,7 +9,7 @@
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Spaces-F5C124?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/)
 
 
-
+<br>
 <!-- Tıklanabilir Görsel Kart -->
 <a href="https://bekolomaniac-berkai.hf.space" target="_blank">
   <img src="https://github.com/user-attachments/assets/e694d84b-cc0f-405c-ae25-5cc09d8e3f57" alt="Berkai ile Sohbete Başla" width="350">
