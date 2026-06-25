@@ -10,7 +10,7 @@
 
 <br><br>
 
-<h3>👇 <b>Sohbete Başlamak İçin Görsellerden Birine Tıklayın</b> 👇</h3>
+<h3>👇 <b>Sohbete Başlamak İçin Tıklayın</b> 👇</h3>
 
 <!-- Tıklanabilir Yan Yana Görseller -->
 <table>
