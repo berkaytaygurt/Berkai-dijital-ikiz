@@ -8,7 +8,7 @@
 [![Gemini](https://img.shields.io/badge/Gemini_2.5-Flash-FF8C00?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Spaces-F5C124?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/)
 
-<br><br>
+<br>
 
 <h3>👇 <b>Sohbete Başlamak İçin Tıklayın</b> 👇</h3>
 
