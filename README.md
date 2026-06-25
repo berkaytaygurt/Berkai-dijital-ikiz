@@ -8,14 +8,25 @@
 [![Gemini](https://img.shields.io/badge/Gemini_2.5-Flash-FF8C00?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Spaces-F5C124?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/)
 
-
-<br>
-<!-- Tıklanabilir Uygulama Linki -->
-<h3>👇 <b>Berkai ile canlı konuşmak için buraya tıklayın</b> 👇</h3>
-<a href="https://bekolomaniac-berkai.hf.space" target="_blank">
-  <img src="https://img.shields.io/badge/SİSTEME_GİRİŞ_YAP-2563eb?style=for-the-badge&logo=googlechat&logoColor=white" alt="Sohbete Başla">
-</a>
 <br><br>
+
+<h3>👇 <b>Sohbete Başlamak İçin Görsellerden Birine Tıklayın</b> 👇</h3>
+
+<!-- Tıklanabilir Yan Yana Görseller -->
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://bekolomaniac-berkai.hf.space" target="_blank">
+        <img src="https://github.com/user-attachments/assets/e694d84b-cc0f-405c-ae25-5cc09d8e3f57" width="320" alt="Giriş Ekranı" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://bekolomaniac-berkai.hf.space" target="_blank">
+        <img src="https://github.com/user-attachments/assets/e2f454d4-f6de-4ad2-a6e6-e88812e29d64" width="320" alt="Sohbet Ekranı" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+      </a>
+    </td>
+  </tr>
+</table>
 
 </div>
 
@@ -41,23 +52,6 @@ Maliyet optimizasyonu ve veri gizliliğini en üst düzeyde tutmak için sistem 
 - **🛡️ Güvenlik Kalkanı:** Sadece önceden tanımlı şifreyi bilen kullanıcılar sisteme erişebilir.
 - **🚦 Gelişmiş Rate Limit:** Kötü niyetli kullanımı engellemek için IP tabanlı giriş ve token tabanlı mesaj limitleri aktiftir.
 - **💰 Bütçe Kontrolü:** Maksimum aylık API maliyeti kilitleri sisteme hard-coded olarak entegre edilmiştir.
-
----
-
-<div align="center">
-  <h3>📸 Uygulama Arayüzü ve Sohbet Deneyimi</h3>
-  <br>
-  <table>
-    <tr>
-      <td align="center"><b>Sistem Giriş Kartı</b></td>
-      <td align="center"><b>RAG Hafızalı Sohbet</b></td>
-    </tr>
-    <tr>
-      <td><img src="https://github.com/user-attachments/assets/e694d84b-cc0f-405c-ae25-5cc09d8e3f57" width="320" alt="Giriş Ekranı" style="border-radius: 15px;"></td>
-      <td><img src="https://github.com/user-attachments/assets/e2f454d4-f6de-4ad2-a6e6-e88812e29d64" width="320" alt="Sohbet Ekranı" style="border-radius: 15px;"></td>
-    </tr>
-  </table>
-</div>
 
 ---
 
