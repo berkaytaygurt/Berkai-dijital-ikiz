@@ -42,6 +42,16 @@ Maliyet optimizasyonu ve veri gizliliğini en üst düzeyde tutmak için sistem 
 
 ---
 
+<details>
+  <summary><b>📸 Uygulama İçi Sohbet Ekranını Görmek İçin Tıklayın</b></summary>
+  <br>
+  <div align="center">
+    <img src="https://github.com/user-attachments/assets/e2f454d4-f6de-4ad2-a6e6-e88812e29d64" width="350" alt="Berkai Sohbet Ekranı" style="border-radius: 15px; border: 1px solid #333; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+  </div>
+</details>
+
+---
+
 <div align="center">
   <b>Geliştirici:</b> Berkay Taygurt | Yapay Zeka Mühendisliği, Hacettepe Üniversitesi
 </div>
