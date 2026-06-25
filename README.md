@@ -10,10 +10,12 @@
 
 
 <br>
-<!-- Tıklanabilir Görsel Kart -->
+<!-- Tıklanabilir Uygulama Linki -->
+<h3>👇 <b>Berkai ile canlı konuşmak için buraya tıklayın</b> 👇</h3>
 <a href="https://bekolomaniac-berkai.hf.space" target="_blank">
-  <img src="https://github.com/user-attachments/assets/e694d84b-cc0f-405c-ae25-5cc09d8e3f57" alt="Berkai ile Sohbete Başla" width="350">
+  <img src="https://img.shields.io/badge/SİSTEME_GİRİŞ_YAP-2563eb?style=for-the-badge&logo=googlechat&logoColor=white" alt="Sohbete Başla">
 </a>
+<br><br>
 
 </div>
 
@@ -43,9 +45,18 @@ Maliyet optimizasyonu ve veri gizliliğini en üst düzeyde tutmak için sistem 
 ---
 
 <div align="center">
-  <h3>📸 Uygulama İçi Sohbet Ekranı</h3>
+  <h3>📸 Uygulama Arayüzü ve Sohbet Deneyimi</h3>
   <br>
-  <img src="https://github.com/user-attachments/assets/e2f454d4-f6de-4ad2-a6e6-e88812e29d64" width="350" alt="Berkai Sohbet Ekranı" style="border-radius: 15px; border: 1px solid #333; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+  <table>
+    <tr>
+      <td align="center"><b>Sistem Giriş Kartı</b></td>
+      <td align="center"><b>RAG Hafızalı Sohbet</b></td>
+    </tr>
+    <tr>
+      <td><img src="https://github.com/user-attachments/assets/e694d84b-cc0f-405c-ae25-5cc09d8e3f57" width="320" alt="Giriş Ekranı" style="border-radius: 15px;"></td>
+      <td><img src="https://github.com/user-attachments/assets/e2f454d4-f6de-4ad2-a6e6-e88812e29d64" width="320" alt="Sohbet Ekranı" style="border-radius: 15px;"></td>
+    </tr>
+  </table>
 </div>
 
 ---
