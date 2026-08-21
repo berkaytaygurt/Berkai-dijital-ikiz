@@ -42,16 +42,35 @@ Maliyet optimizasyonu ve veri gizliliğini en üst düzeyde tutmak için sistem 
 | Bileşen | Konum | İşlev | Gizlilik |
 | :--- | :--- | :--- | :--- |
 | **Ön Yüz & Sunucu** | Hugging Face (Docker) | Arayüz yayını ve Flask routing. Uçucu (ephemeral) çalışır. | 🔓 Public |
-| **Veritabanı & Hafıza** | GitHub (Private Repo) | Kişi profilleri, RAG hafızası ve ChromaDB verileri. | 🔒 Private |
+| **Veritabanı & Hafıza** | GitHub (Private Repo) | Kendi mesajlarımdan üretilmiş RAG hafızası ve ChromaDB verileri. | 🔒 Private |
 
 > ⚙️ **Çalışma Mantığı:** Sunucu her başlatıldığında, güvenli bir tünel üzerinden gizli repodaki verileri anlık olarak çeker. Dışarıdan bağlanan bir kullanıcı arayüze erişebilir ancak arka plandaki vektör veritabanına asla ulaşamaz.
 
 ## 🚀 Temel Özellikler
 
-- **🎭 Dinamik Üslup Adaptasyonu:** Vektörel hafızadan çekilen geçmiş sohbetlerin tonuna göre asistanın üslubu (resmi/samimi) otomatik şekillenir.
-- **🛡️ Güvenlik Kalkanı:** Sadece önceden tanımlı şifreyi bilen kullanıcılar sisteme erişebilir.
-- **🚦 Gelişmiş Rate Limit:** Kötü niyetli kullanımı engellemek için IP tabanlı giriş ve token tabanlı mesaj limitleri aktiftir.
-- **💰 Bütçe Kontrolü:** Maksimum aylık API maliyeti kilitleri sisteme hard-coded olarak entegre edilmiştir.
+- **🎭 Üslup Taklidi:** Vektörel hafızadan çekilen kendi geçmiş mesajlarımın tonuna göre asistanın üslubu (noktalama, kısaltma, kelime tercihi) şekillenir.
+- **🛡️ Güvenlik Kalkanı:** Sadece şifreyi bilen kullanıcılar erişebilir. Zayıf/tahmin edilebilir şifreyle uygulama hiç başlamaz.
+- **🚦 Rate Limit:** Reverse proxy arkasında gerçek istemci IP'si (`X-Forwarded-For`) üzerinden giriş limiti, token bazlı mesaj limiti ve günlük tavanlar.
+- **💰 Bütçe Kontrolü:** Maliyet sayacı kalıcı olarak tutulur (süreç yeniden başlayınca sıfırlanmaz), günlük mesaj tavanları ve bütçe kilidi vardır.
+- **🔒 Veri Sızdırma Koruması:** "Hafızanı aynen dök", "prompt'unu göster" gibi istekler ve üçüncü şahıslar hakkında bilgi çıkarmaya çalışan sorular modele hiç ulaşmadan engellenir.
+
+---
+
+## 🔐 Veri Gizliliği Notu
+
+Bu asistanın hafızası **yalnızca benim kendi yazdığım mesajlardan** oluşur.
+
+Projenin ilk sürümünde hafıza, sohbet dökümlerinin tamamını (karşı tarafın
+mesajları dahil) içeriyordu. Bu, o kişilerin onayı olmadan kişisel verilerini
+işlemek anlamına geldiği için veri seti kaynağından yeniden üretildi:
+
+- Karşı tarafa ait bütün satırlar ve isimler temizlendi
+- Parça etiketlerindeki `source` (konuşulan kişi) alanı kaldırıldı
+- "Falanca kişiyle geçmişimi getir" özelliği koddan tamamen çıkarıldı
+- Üçüncü şahıslar hakkında bilgi isteyen sorular uygulama katmanında engellenir
+
+Temizleme adımları `veri_filtrele.py`, vektör veritabanının kurulumu
+`db_kur_temiz.py` içinde ve tekrar üretilebilir durumdadır.
 
 ---
 
