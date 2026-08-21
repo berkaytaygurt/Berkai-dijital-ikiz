@@ -1,0 +1,54 @@
+# ══════════════════════════════════════════════════════════════
+#  BEYAZ LİSTE MANTIĞI
+#  Bu klasörde gerçek insanların WhatsApp/Instagram yazışmaları var.
+#  Eski sürüm "neyi gizleyeyim" mantığıyla yazılmıştı ve ham JSON veri
+#  dosyalarını, inbox/ klasörünü ve WhatsApp export klasörlerini
+#  KAPSAMIYORDU — tek bir "git add -A" hepsini repoya sokabilirdi.
+#
+#  Artık tersi: önce HER ŞEY yok sayılıyor, sonra sadece güvenli
+#  dosyalar tek tek açılıyor. Klasöre yeni bir veri dosyası düştüğünde
+#  otomatik olarak korunmuş olur.
+# ══════════════════════════════════════════════════════════════
+
+# 1) Önce her şeyi yok say
+*
+
+# 2) Klasörlere girilebilsin (içindekiler yine * ile kapalı kalır)
+!*/
+
+# 3) Repoya SADECE bunlar girer
+!.gitignore
+!README.md
+!requirements.txt
+!Dockerfile
+!berkai.py
+!index.html
+!veri_filtrele.py
+!db_kur_temiz.py
+!berkai.png
+!buton.png
+
+# 4) Emniyet kemeri: yukarıdaki kurallar ileride gevşetilse bile
+#    bu kalıplar her koşulda dışarıda kalsın.
+.env
+*.env
+*.db
+*.sqlite3
+berkay_profil.json
+berkay_sadece_ben.json
+berkay_tam_hafiza_db/
+berkay_sadece_ben_db/
+berkay_hafiza_db_21haz/
+berkay_tam_hafiza_db_ESKI_KIRLI/
+berkai-veri/
+inbox/
+*WhatsApp Sohbeti*
+*haziran*veri*.json
+altin_veri*.json
+__pycache__/
+*.pyc
+venv/
+.venv/
+.vscode/
+.idea/
+.DS_Store

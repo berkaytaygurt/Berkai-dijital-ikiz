@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'; connect-src 'self';">
+    <title>Berkai</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a1128;
+            --card-border: #141e30;
+            --card-bg: #eef2f6;
+            --text-dark: #111a2c;
+            --text-muted: #5a6a85;
+            --primary-blue: #2563eb;
+            --primary-hover: #1d4ed8;
+            --chat-bg: #0c1524;
+            --msg-user: #2563eb;
+            --msg-bot: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
+
+        html, body {
+            /* dvh: klavyeyi hesaba katan dinamik viewport yüksekliği */
+            height: 100dvh;
+            overflow: hidden;
+            overscroll-behavior: none;
+            background: var(--bg-dark);
+            color: #fff;
+        }
+
+        body { display: flex; flex-direction: column; }
+
+        /* ─── GİRİŞ EKRANI ─── */
+        #giris-ekrani {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 110px 20px 20px;
+            background: radial-gradient(circle at center, #111c3a 0%, var(--bg-dark) 100%);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        #giris-ekrani.gizli { display: none; }
+
+        .login-card-wrapper { position: relative; width: 100%; max-width: 360px; margin-top: 20px; }
+
+        .avatar-container {
+            position: absolute; top: -70px; left: 50%; transform: translateX(-50%);
+            width: 140px; height: 140px; z-index: 10;
+            filter: drop-shadow(0 12px 20px rgba(0,0,0,0.35));
+        }
+        .avatar-container img { width: 100%; height: 100%; object-fit: contain; }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 8px solid var(--card-border);
+            border-radius: 28px;
+            padding: 80px 24px 32px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .typewriter-text { color: var(--text-dark); font-size: 22px; font-weight: 800; margin-bottom: 24px; line-height: 1.4; }
+        .alt-bilgi { color: var(--text-muted); font-size: 15px; font-weight: 600; margin-bottom: 24px; }
+
+        #isim-input, #sifre-input {
+            width: 100%; background: #fff; border: 2px solid #d1d5db; color: var(--text-dark);
+            padding: 14px 16px; border-radius: 16px; font-size: 16px; font-weight: 600;
+            outline: none; text-align: center; margin-bottom: 16px; transition: all .3s;
+        }
+        #isim-input:focus, #sifre-input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
+        #isim-input::placeholder, #sifre-input::placeholder { color: #9ca3af; font-weight: 600; }
+
+        #baslat-btn {
+            width: 100%; background: var(--primary-blue); border: none; color: #fff;
+            padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: all .2s; box-shadow: 0 4px 12px rgba(37,99,235,.3);
+        }
+        #baslat-btn:active { transform: scale(.98); }
+        #baslat-btn:disabled { opacity: .7; cursor: not-allowed; transform: none; }
+
+        /* ─── SOHBET EKRANI ─── */
+        #sohbet-ekrani {
+            display: none;
+            flex-direction: column;
+            /* JS, visualViewport.height ile bu değeri günceller */
+            height: 100dvh;
+            overflow: hidden;
+            background: var(--chat-bg);
+        }
+        #sohbet-ekrani.aktif { display: flex; }
+
+        #header {
+            background: rgba(14,22,40,.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 20px;
+            display: flex; align-items: center; gap: 14px;
+            border-bottom: 1px solid rgba(255,255,255,.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,.2);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .header-avatar {
+            width: 44px; height: 44px; background: var(--card-bg);
+            border-radius: 14px; overflow: hidden; border: 2px solid var(--primary-blue);
+        }
+        #berkai-adi { font-size: 17px; font-weight: 800; letter-spacing: .5px; }
+        #durum { font-size: 13px; color: #34d399; font-weight: 600; }
+
+        /* KRİTİK: flex:1 kalan alanı alır, overflow-y:auto sadece chat kayar */
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            padding: 20px 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            /* scroll-behavior: smooth kaldırıldı — klavye animasyonuyla çakışıyor */
+        }
+
+        .mesaj-satiri { display: flex; align-items: flex-end; gap: 8px; animation: msg-in .3s cubic-bezier(.175,.885,.32,1.275); }
+        @keyframes msg-in { from { opacity:0; transform:translateY(15px) scale(.9); } to { opacity:1; transform:none; } }
+        .mesaj-satiri.kullanici-satiri { justify-content: flex-end; }
+        .mesaj-satiri.berkai-satiri { justify-content: flex-start; }
+
+        .msg-avatar {
+            width: 50px; height: 50px; background: var(--card-bg);
+            border-radius: 10px; overflow: hidden; flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,.1);
+        }
+
+        .mesaj {
+            max-width: 75%; padding: 12px 16px;
+            font-size: 15px; font-weight: 600; line-height: 1.5;
+            word-wrap: break-word; white-space: pre-wrap;
+        }
+        .kullanici { background: var(--msg-user); color: #fff; border-radius: 18px 18px 4px 18px; }
+        .berkai { background: var(--msg-bot); color: #f8fafc; border-radius: 18px 18px 18px 4px; border: 1px solid rgba(255,255,255,.05); }
+
+        .yaziyor { display:flex; align-items:center; gap:6px; padding:12px 16px; background:var(--msg-bot); border-radius:18px 18px 18px 4px; width:fit-content; }
+        .dot { width:6px; height:6px; background:#94a3b8; border-radius:50%; animation:bounce 1.4s infinite ease-in-out both; }
+        .dot:nth-child(1) { animation-delay:-.32s; }
+        .dot:nth-child(2) { animation-delay:-.16s; }
+        @keyframes bounce { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
+
+        /* KRİTİK: position:static, flex-shrink:0 → klavyeyle hareket etmez */
+        #input-area {
+            background: rgba(14,22,40,.97);
+            padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+            display: flex; gap: 8px; align-items: center;
+            border-top: 1px solid rgba(255,255,255,.07);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        #mesaj-input {
+            flex: 1; background: #1e293b; border: 1px solid rgba(255,255,255,.1);
+            color: #fff; padding: 12px 16px; border-radius: 24px;
+            font-size: 15px; font-weight: 600; outline: none;
+            transition: border-color .3s;
+            -webkit-text-size-adjust: 100%; /* iOS zoom engeli */
+        }
+        #mesaj-input:focus { border-color: var(--primary-blue); }
+        #mesaj-input::placeholder { color: #64748b; }
+        #mesaj-input::-webkit-search-cancel-button { display: none; } /* bunu ekle */
+        #gonder-btn {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--primary-blue); border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: all .2s;
+        }
+        #gonder-btn:hover { background: var(--primary-hover); transform: scale(1.05); }
+        #gonder-btn:active { transform: scale(.95); }
+        #gonder-btn svg { fill: #fff; margin-left: 2px; width: 20px; height: 20px; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 10px; }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 75px 20px 24px; border-width: 6px; }
+            .typewriter-text { font-size: 20px; }
+            .mesaj { max-width: 85%; font-size: 14px; }
+            #header { padding: 12px 16px; }
+            #input-area { padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); gap: 6px; }
+            #mesaj-input { padding: 10px 14px; font-size: 15px; }
+            #gonder-btn { width: 40px; height: 40px; }
+            .avatar-container { width: 120px; height: 120px; top: -60px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="giris-ekrani">
+    <div class="login-card-wrapper">
+        <div class="avatar-container">
+            <img src="berkai.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;border:6px solid #fff;background:#eef2f6;box-shadow:0 12px 25px rgba(0,0,0,.4);" alt="Berkai Avatar">
+        </div>
+        <div class="login-card">
+            <div class="typewriter-text" style="margin-bottom:4px;font-size:28px;">Berkai</div>
+            <div class="typewriter-text" style="font-size:18px;">Yapay Ama Doğal Dostun</div>
+            <div class="alt-bilgi">Berkay'ın dijital kopyasıyla sohbete başla</div>
+            <input id="isim-input" placeholder="Adın ne?" autocomplete="off" autofocus maxlength="40">
+            <input id="sifre-input" type="password" placeholder="Erişim Şifresi" autocomplete="off" maxlength="100" onkeydown="if(event.key==='Enter') sohbetiBaslat()">
+            <button id="baslat-btn" onclick="sohbetiBaslat()">Sohbete Başla</button>
+        </div>
+    </div>
+</div>
+
+<div id="sohbet-ekrani">
+    <div id="header">
+        <div class="header-avatar">
+            <img src="berkai.png" style="width:100%;height:100%;object-fit:cover;" alt="B">
+        </div>
+        <div>
+            <div id="berkai-adi">Berkai</div>
+            <div id="durum">Senin için her zaman çevrimiçi</div>
+        </div>
+    </div>
+    <div id="chat"></div>
+    <div id="input-area">
+<div style="display:contents">
+  <input type="text" style="display:none" aria-hidden="true">
+  <input id="mesaj-input"
+    type="search"
+    placeholder="Mesaj yaz..."
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck="false"
+    data-form-type="other"
+    onkeydown="if(event.key==='Enter' && !event.shiftKey) mesajGonder()">
+</div>
+        <button id="gonder-btn" onclick="mesajGonder()">
+            <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    let aktifToken = sessionStorage.getItem("berkai_token") || "";
+    let kullaniciAdi = sessionStorage.getItem("berkai_isim") || "";
+
+    window.addEventListener("DOMContentLoaded", () => {
+        if (aktifToken) {
+            document.getElementById("giris-ekrani").classList.add("gizli");
+            document.getElementById("sohbet-ekrani").classList.add("aktif");
+        }
+        klavyeMotorununBaslat();
+    });
+
+    // ─── KLAVYE MOTORU ───────────────────────────────────────────
+    // Strateji: visualViewport.height değişince sohbet ekranının
+    // yüksekliğini güncelle + chat'i en alta kaydır.
+    // dvh CSS'i genel yapıyı tutar, JS sadece scroll'u düzeltir.
+
+    function klavyeMotorununBaslat() {
+        const sohbet = document.getElementById("sohbet-ekrani");
+        const chat = document.getElementById("chat");
+
+        function guncelle() {
+            // Gerçek görünür yükseklik (klavye varsa klavye hariç)
+            const yukseklik = window.visualViewport
+                ? window.visualViewport.height
+                : window.innerHeight;
+
+            // Sohbet ekranını tam bu yüksekliğe kilitle
+            if (sohbet.classList.contains("aktif")) {
+                sohbet.style.height = yukseklik + "px";
+            }
+
+            // Android'in sayfayı kaymasını sıfırla
+            window.scrollTo(0, 0);
+
+            // KRİTİK: chat'i en alta kaydır ki son mesaj görünsün
+            // requestAnimationFrame: layout tamamlandıktan sonra çalışır
+            requestAnimationFrame(() => {
+                chat.scrollTop = chat.scrollHeight;
+            });
+        }
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("resize", guncelle);
+            window.visualViewport.addEventListener("scroll", guncelle);
+        } else {
+            window.addEventListener("resize", guncelle);
+        }
+
+        // Input focus'ta da tetikle (bazı Android'ler resize atmıyor)
+        document.getElementById("mesaj-input").addEventListener("focus", () => {
+            setTimeout(guncelle, 100);
+            setTimeout(guncelle, 300); // geç açılan klavyeler için
+        });
+
+        guncelle(); // ilk yükleme
+    }
+    // ─────────────────────────────────────────────────────────────
+
+    const YUKLENME_MESAJLARI = [
+        "Beyin açılıyor...", "Anılar tozu siliniyor...", "Berkay'ı uyandırıyoruz...",
+        "Hafıza kartı takılıyor...", "Espri modülü ısınıyor...",
+        "WhatsApp geçmişi taranıyor...", "Kafadan ekran kartı çalışıyor...",
+    ];
+    let yuklenmeInterval = null;
+
+    function yuklenmeMesajlariBaslat(btn) {
+        let i = 0;
+        btn.textContent = YUKLENME_MESAJLARI[0];
+        yuklenmeInterval = setInterval(() => {
+            i = (i + 1) % YUKLENME_MESAJLARI.length;
+            btn.textContent = YUKLENME_MESAJLARI[i];
+        }, 1800);
+    }
+
+    function yuklenmeMesajlariDurdur() {
+        if (yuklenmeInterval) { clearInterval(yuklenmeInterval); yuklenmeInterval = null; }
+    }
+
+    async function sohbetiBaslat() {
+        const input = document.getElementById("isim-input");
+        const sifreInput = document.getElementById("sifre-input");
+        const btn = document.getElementById("baslat-btn");
+        const isim = input.value.trim();
+        const sifre = sifreInput.value.trim();
+        if (!isim) { input.focus(); return; }
+        if (!sifre) { sifreInput.focus(); return; }
+        kullaniciAdi = isim;
+        btn.disabled = true;
+        yuklenmeMesajlariBaslat(btn);
+        try {
+            const res = await fetch("/baslat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isim, sifre })
+            });
+            yuklenmeMesajlariDurdur();
+            if (!res.ok) {
+                const err = await res.json();
+                alert(err.hata || "Giriş başarısız!");
+                btn.disabled = false;
+                btn.textContent = "Sohbete Başla";
+                sifreInput.value = ""; sifreInput.focus();
+                return;
+            }
+            const data = await res.json();
+            aktifToken = data.token;
+            sessionStorage.setItem("berkai_token", aktifToken);
+            sessionStorage.setItem("berkai_isim", kullaniciAdi);
+            document.getElementById("giris-ekrani").classList.add("gizli");
+            const sohbet = document.getElementById("sohbet-ekrani");
+            sohbet.classList.add("aktif");
+            // Sohbet açılınca yüksekliği güncelle
+            if (window.visualViewport) {
+                sohbet.style.height = window.visualViewport.height + "px";
+            }
+            if (typeof yaziyorGizle === "function") yaziyorGizle();
+            mesajEkle("berkai", data.cevap);
+            document.getElementById("mesaj-input").focus();
+        } catch (e) {
+            yuklenmeMesajlariDurdur();
+            alert("Bağlantı hatası oluştu!");
+            btn.disabled = false;
+            btn.textContent = "Sohbete Başla";
+        }
+    }
+
+    function mesajEkle(tip, metin) {
+        const chat = document.getElementById("chat");
+        const satir = document.createElement("div");
+        satir.className = `mesaj-satiri ${tip}-satiri`;
+        if (tip === "berkai") {
+            const av = document.createElement("div");
+            av.className = "msg-avatar";
+            av.innerHTML = '<img src="berkai.png" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
+            satir.appendChild(av);
+        }
+        const balon = document.createElement("div");
+        balon.className = `mesaj ${tip}`;
+        balon.textContent = metin;
+        satir.appendChild(balon);
+        chat.appendChild(satir);
+        // Yeni mesaj eklenince en alta in
+        requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+    }
+
+    function yaziyorGoster() {
+        const chat = document.getElementById("chat");
+        const satir = document.createElement("div");
+        satir.className = "mesaj-satiri berkai-satiri";
+        satir.id = "yaziyor-gostergesi";
+        const av = document.createElement("div");
+        av.className = "msg-avatar";
+        av.innerHTML = '<img src="berkai.png" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
+        satir.appendChild(av);
+        const balon = document.createElement("div");
+        balon.className = "yaziyor";
+        balon.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+        satir.appendChild(balon);
+        chat.appendChild(satir);
+        requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+    }
+
+    function yaziyorGizle() {
+        document.getElementById("yaziyor-gostergesi")?.remove();
+    }
+
+    async function mesajGonder() {
+        const input = document.getElementById("mesaj-input");
+        const mesaj = input.value.trim();
+        if (!mesaj) return;
+        mesajEkle("kullanici", mesaj);
+        input.value = "";
+        yaziyorGoster();
+        try {
+            const res = await fetch("/sor", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token: aktifToken, mesaj })
+            });
+            const data = await res.json();
+            yaziyorGizle();
+            if (res.ok) {
+                mesajEkle("berkai", data.cevap);
+            } else if (res.status === 401) {
+                sessionStorage.removeItem("berkai_token");
+                sessionStorage.removeItem("berkai_isim");
+                mesajEkle("berkai", "Oturumun sona ermiş gibi görünüyor, sayfayı yenileyip tekrar giriş yapar mısın?");
+            } else {
+                mesajEkle("berkai", "Sıkıntı var aga: " + (data.hata || "Sistem tıkandı."));
+            }
+        } catch {
+            yaziyorGizle();
+            mesajEkle("berkai", "Aga sistemde bir hata oldu, gitmiyor mesaj.");
+        }
+    }
+</script>
+</body>
+</html>
